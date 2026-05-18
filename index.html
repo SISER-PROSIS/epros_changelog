@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Atualizações</title>
+    <title>Epros ERP — Atualizações</title>
+    <link rel="icon" href="./favicon.ico" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -134,22 +135,49 @@
             padding-left: 0.75rem;
             color: rgb(100, 116, 139);
         }
+
+        .site-header h1 {
+            font-size: 1.125rem !important;
+        }
+
+        .site-header p {
+            font-size: 0.8125rem !important;
+        }
     </style>
 </head>
 
-<body class="min-h-screen flex">
-    <aside class="canva-sidebar w-64 min-h-screen p-6 flex-shrink-0 border-r border-slate-200">
-        <h1 class="font-bold mb-6">
-            Atualizações
-        </h1>
-        <nav id="nav-list" class="space-y-2"></nav>
-    </aside>
-    <main id="main" class="flex-1 w-full max-w-4xl mx-auto p-10 overflow-y-auto">
-        <div class="flex items-center gap-3 text-slate-400 text-sm py-10">
-            <div class="dot-pulse"><span></span><span></span><span></span></div>
-            Carregando...
+<body class="min-h-screen flex flex-col">
+    <header class="site-header sticky top-0 z-20 flex-shrink-0 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+        <div class="flex items-center gap-3 px-6 py-4 mx-auto w-full">
+            <img src="./siser.png" alt="" width="36" height="36" class="rounded-lg" />
+            <div>
+                <h1 class="font-bold text-slate-900">Siser ERP</h1>
+                <p class="text-slate-500 mt-0.5">Atualizações do sistema</p>
+            </div>
         </div>
-    </main>
+    </header>
+    <div class="flex flex-1 min-h-0">
+        <aside class="canva-sidebar w-64 min-h-0 p-6 flex-shrink-0 border-r border-slate-200 overflow-y-auto">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-4">Versões</p>
+            <nav id="nav-list" class="space-y-2"></nav>
+        </aside>
+        <main class="flex-1 w-full max-w-4xl mx-auto p-10 overflow-y-auto">
+            <section class="flex flex-col gap-2 mb-10 pb-8 border-b border-slate-200" aria-labelledby="page-intro-title">
+                <h2 id="page-intro-title" class="font-bold text-slate-900">Central de atualizações</h2>
+                <p class="text-slate-600 leading-relaxed max-w-2xl">
+                    Acompanhe as novidades, melhorias e correções do Siser ERP.
+                    Selecione uma versão na barra lateral para ver o que mudou em cada atualização.
+                </p>
+            </section>
+            <h2 id="release-date" class="font-bold mb-8 text-slate-900"></h2>
+            <div id="release-content">
+                <div class="flex items-center gap-3 text-slate-400 text-sm py-10">
+                    <div class="dot-pulse"><span></span><span></span><span></span></div>
+                    Carregando...
+                </div>
+            </div>
+        </main>
+    </div>
     <script>
         const BASE = './releases';
         let releases = [];
@@ -226,11 +254,8 @@
         }
         
         // ── render panel ──────────────────────────────────────────────────────────
-        function renderPanel(idx, items) {
-          const r = releases[idx];
-          return `
-            <h2 class="font-bold mb-8">${fmtDate(r.date)}</h2>
-            ${items.map(item => `
+        function renderPanel(items) {
+          return items.map(item => `
               <article class="mt-1 mb-8 border-l-4 ${cardClass(item.tags)} pl-5">
                 <div class="flex flex-wrap gap-1.5 mb-1.5">
                     ${item.tags.map(t => `<span class="inline-block px-2 py-0.5 rounded text-xs font-semibold ${tagClass(t)}">${t}</span>`).join('')}
@@ -240,41 +265,45 @@
                     ${mdToHtml(item.desc)}
                 </div>
               </article>
-            `).join('')}
-          `;
+            `).join('');
         }
         
         // ── nav ───────────────────────────────────────────────────────────────────
         function buildNav() {
           const nav = document.getElementById('nav-list');
           nav.innerHTML = releases.map((r, i) => `
-            <button  class="release-btn ${i === 0 ? 'active' : ''} w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition">
+            <button type="button" data-idx="${i}" class="release-btn ${i === 0 ? 'active' : ''} w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition">
                 ${fmtDate(r.date)}
             </button>
           `).join('');
+          nav.querySelectorAll('.release-btn').forEach(btn => {
+            btn.addEventListener('click', () => selectRelease(Number(btn.dataset.idx)));
+          });
         }
         
         // ── select ────────────────────────────────────────────────────────────────
         async function selectRelease(idx) {
-          document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
-        
-          const main = document.getElementById('main');
+          document.querySelectorAll('.release-btn').forEach((b, i) => b.classList.toggle('active', i === idx));
+
+          const r = releases[idx];
+          document.getElementById('release-date').textContent = fmtDate(r.date);
+
+          const content = document.getElementById('release-content');
           if (cache[idx]) {
-            main.innerHTML = cache[idx];
+            content.innerHTML = cache[idx];
             return;
           }
-        
-          main.innerHTML = `<div class="flex items-center gap-3 text-slate-400 text-sm py-10">
+
+          content.innerHTML = `<div class="flex items-center gap-3 text-slate-400 text-sm py-10">
             <div class="dot-pulse"><span></span><span></span><span></span></div> Carregando...
           </div>`;
-        
-          const r = releases[idx];
+
           const res = await fetch(`${BASE}/${r.file}`);
           const raw = await res.text();
           const items = parseMd(raw);
-          const html = renderPanel(idx, items);
+          const html = renderPanel(items);
           cache[idx] = html;
-          main.innerHTML = html;
+          content.innerHTML = html;
         }
         
         // ── init ──────────────────────────────────────────────────────────────────
